@@ -15,6 +15,11 @@ It's controlled by these 2 environment variables:
 * `WRAPGL_EXTENSIONS_MAX_LENGTH` - returns only at most specified string extensions. May have unintended consequences. It's
 recommended to use this along with `WRAPGL_EXTENSIONS_MAX_YEAR` to have better control on extensions.
 
+Additionally if you want to load another OpenGL32.dll implementation, there's this environment variable:
+
+* `WRAPGL_OPENGL32` - specify full path to OpenGL32.dll to load instead of system default OpenGL32.dll
+located in `C:\Windows\System32\OpenGL32.dll`.
+
 Compile
 -------
 

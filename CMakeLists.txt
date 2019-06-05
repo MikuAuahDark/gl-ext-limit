@@ -34,11 +34,6 @@ project(glwrapper LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# If wrap.h is not found, try to create new (Protip: it doesn't work)
-#if (NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/wrap.h)
-#	message(FATAL_ERROR "wrap.h not found. Please generate wrap.h using Lua")
-#endif()
-
 if (NOT WIN32 OR CYGWIN)
 	message(FATAL_ERROR "Non-Win32 is not supported")
 endif()
