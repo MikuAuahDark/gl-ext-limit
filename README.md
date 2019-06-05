@@ -8,7 +8,7 @@ result in crash. Only for Windows.
 Usage
 -----
 
-It's controlled by these 2 variables:
+It's controlled by these 2 environment variables:
 
 * `WRAPGL_EXTENSIONS_MAX_YEAR` - returns only extensions at specified year. See https://www.mesa3d.org/application-issues.html
 
