@@ -40,7 +40,7 @@ struct OpenGLExtension
 };
 
 static std::vector<OpenGLExtension> extensions = {
-	{"", {0, 0, 0, 0}, 0}
+	{"", "", {0, 0, 0, 0}, 0}
 #define EXT(name_str, driver_cap, gll_ver, glc_ver, gles_ver, gles2_ver, yyyy) \
 	,{"GL_" #name_str, "GL_" #driver_cap, {gll_ver, gles_ver, gles2_ver, glc_ver}, yyyy}
 #include "extensions_table.h"
@@ -61,12 +61,26 @@ __declspec(dllexport) const GLubyte *__stdcall glGetString(GLenum name)
 	{
 		static std::string extensionString;
 		static bool extensionInit = false;
+		static const char *oldExt = nullptr;
+		const char *ext = (const char *) glGetString_t(GL_EXTENSIONS);
+
+		// Null extension, probably no GL context yet
+		if (ext == nullptr)
+		{
+			extensionInit = false;
+			return nullptr;
+		}
+		oldExt = ext;
+
+		// Different extensions, probably new context with different GPU
+		if (oldExt != ext && strcmp(oldExt, ext) != 0)
+			extensionInit = false;
 
 		if (extensionInit == false)
 		{
 			const char *year = nullptr;
 			const char *length = nullptr;
-			const char *ext = (const char *) glGetString_t(GL_EXTENSIONS);
+
 			uint16_t maxYear = ~0;
 			uint32_t maxLength = ~0;
 			std::stringstream strbuilder;
@@ -77,39 +91,47 @@ __declspec(dllexport) const GLubyte *__stdcall glGetString(GLenum name)
 			if ((length = getenv("WRAPGL_EXTENSIONS_MAX_LENGTH")) != nullptr)
 				maxLength = (uint32_t) atoi(length);
 			
-			bool prependSpace = false;
-			for (auto &x: extensions)
+			try
 			{
-				if (prependSpace)
+				bool prependSpace = false;
+				for (auto &x: extensions)
 				{
-					strbuilder.write(" ", 1);
-					prependSpace = false;
-				}
+					if (prependSpace)
+					{
+						strbuilder.write(" ", 1);
+						prependSpace = false;
+					}
 
-				if (maxYear < x.year)
-					continue;
-
-				strbuilder.seekp(0, std::ios::end);
-				size_t len1 = strbuilder.tellp();
-				size_t len2 = x.name.length();
-				size_t len3 = x.altName.length();
-
-				if (strstr(ext, x.name.c_str()) != nullptr)
-				{
-					if (len1 + len2 + 2 >= maxLength)
+					if (maxYear < x.year)
 						continue;
 
-					strbuilder.write(x.name.c_str(), len2);
-					prependSpace = true;
-				}
-				else if (strstr(ext, x.altName.c_str()) != nullptr)
-				{
-					if (len1 + len3 + 2 >= maxLength)
-						continue;
+					strbuilder.seekp(0, std::ios::end);
+					size_t len1 = strbuilder.tellp();
+					size_t len2 = x.name.length();
+					size_t len3 = x.altName.length();
 
-					strbuilder.write(x.altName.c_str(), len3);
-					prependSpace = true;
+					if (strstr(ext, x.name.c_str()) != nullptr)
+					{
+						if (len1 + len2 + 2 >= maxLength)
+							continue;
+
+						strbuilder.write(x.name.c_str(), len2);
+						prependSpace = true;
+					}
+					else if (strstr(ext, x.altName.c_str()) != nullptr)
+					{
+						if (len1 + len3 + 2 >= maxLength)
+							continue;
+
+						strbuilder.write(x.altName.c_str(), len3);
+						prependSpace = true;
+					}
 				}
+			}
+			catch (std::exception &e)
+			{
+				fprintf(stderr, "Exception caught: %s", e.what());
+				return nullptr;
 			}
 
 			extensionString = strbuilder.str();
